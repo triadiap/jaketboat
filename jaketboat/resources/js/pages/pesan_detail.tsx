@@ -265,13 +265,7 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                             Apakah Anda sudah menyelesaikan pembayaran?
                             Pastikan Anda sudah menyimpan informasi pembayaran sebelum menutup halaman ini.
                         </DialogDescription>
-                    </DialogHeader>
-                    {paymentData && (
-                        <div className="bg-muted rounded-md p-3 text-sm">
-                            <p><span className="font-medium">Order ID:</span> {paymentData.order_id}</p>
-                            <p><span className="font-medium">Total Bayar:</span> Rp{paymentData.gross_amount.toLocaleString('id-ID')}</p>
-                        </div>
-                    )}
+                    </DialogHeader>                    
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setConfirmOpen(false)}>
                             Kembali ke Pembayaran
