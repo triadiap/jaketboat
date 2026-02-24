@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use GuzzleHttp\Client;
 
 
 
@@ -229,11 +230,13 @@ class HomeController extends Controller
     }
 
     public function payment_page(Request $request) {
+        $param = Param::all()->pluck('value', 'key')->toArray();
         $client = new Client();
-        $serverKey = env('APP_DEBUG') ? get_param('MIDTRANS_SERVER_KEY_SB') : get_param('MIDTRANS_SERVER_KEY_PROD');
-        $transaction_endpoint = env('APP_DEBUG') ? get_param('MIDTRANS_TRANSACTION_API_SB') : get_param('MIDTRANS_TRANSACTION_API_PROD');
+        $isDebug = config('app.debug');
+        $serverKey = $isDebug ? $param['MIDTRANS_SERVER_KEY_SB'] : $param['MIDTRANS_SERVER_KEY_PROD'];
+        $transaction_endpoint = $isDebug ? $param['MIDTRANS_TRANSACTION_API_SB'] : $param['MIDTRANS_TRANSACTION_API_PROD'];
         
-        $final_amount = (int)$request->gross_amount + (int)get_param('ADMIN_FEE');
+        $final_amount = (int)$request->gross_amount + (int)$param['ADMIN_FEE'];
         $response = $client->request('POST', $transaction_endpoint, [
             'headers' => [
                 'Accept' => 'application/json',
@@ -251,8 +254,8 @@ class HomeController extends Controller
         
         return view('payment', [
             'snap_token' => $data['token'],
-            'js_endpoint' => env('APP_DEBUG') ? get_param('MIDTRANS_JS_ENDPOINT_SB') : get_param('MIDTRANS_JS_ENDPOINT_PROD'),
-            'client_key' => get_param('MIDTRANS_CLIENT_KEY')
+            'js_endpoint' => $isDebug ? $param['MIDTRANS_JS_ENDPOINT_SB'] : $param['MIDTRANS_JS_ENDPOINT_PROD'],
+            'client_key' => $isDebug ? $param['MIDTRANS_CLIENT_KEY_SB'] : $param['MIDTRANS_CLIENT_KEY_PROD']
         ]);
     }
 }
