@@ -169,13 +169,14 @@ class HomeController extends Controller
         $tiket = Ticket::where('payment_code', $payment_code)->firstOrFail();
 
         foreach ($request->input('passengers') as $index => $p) {
-            $request->file("passengers.{$index}.foto_ktp")->store('ktp', 'public');
+            $file = $request->file("passengers.{$index}.foto_ktp");
+            $file->storeAs('ktp', $payment_code."-".$p['nik'].'.'.$file->getClientOriginalExtension(), 'public');
 
             Passenger::create([
                 'id_request'   => $tiket->id,
                 'nik'          => $p['nik'],
                 'name'         => $p['nama'],
-                'code'         => $index,
+                'code'         => $p['no_kursi'],
                 'booking_code' => $payment_code . '-' . $index,
             ]);
         }

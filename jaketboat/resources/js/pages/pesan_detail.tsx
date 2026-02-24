@@ -45,12 +45,14 @@ interface PassengerData {
     nik: string;
     nama: string;
     foto_ktp: File | null;
+    no_kursi: string;
 }
 
 interface PassengerErrors {
     nik?: string;
     nama?: string;
     foto_ktp?: string;
+    no_kursi?: string;
 }
 
 interface SeachProps {
@@ -61,7 +63,7 @@ interface SeachProps {
 
 export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps) {
     const [passengers, setPassengers] = useState<PassengerData[]>(
-        list_kursi.map(() => ({ nik: '', nama: '', foto_ktp: null }))
+        list_kursi.map((item) => ({ nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi }))
     );
     const [errors, setErrors] = useState<PassengerErrors[]>(
         list_kursi.map(() => ({}))
@@ -132,6 +134,7 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
             if (p.foto_ktp) {
                 formData.append(`passengers[${i}][foto_ktp]`, p.foto_ktp);
             }
+            formData.append(`passengers[${i}][no_kursi]`, p.no_kursi);
         });
 
         router.post(`/pesan_tiket_detail/${tiket.payment_code}`, formData);
@@ -154,6 +157,22 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                     <CardTitle className="text-base">Penumpang ke-{index + 1}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3 pl-4 pr-4 pb-4">
+                                    <div className="flex flex-col gap-1">
+                                        <Label htmlFor={`nokursi-${index}`}>No Kursi</Label>
+                                        <Input
+                                            id={`nokursi-${index}`}
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={16}
+                                            placeholder="16 digit NIK"
+                                            value={passengers[index].no_kursi}
+                                            onChange={e =>
+                                                updatePassenger(index, 'no_kursi', e.target.value.replace(/\D/g, '').slice(0, 16))
+                                            }
+                                            aria-invalid={!!errors[index]?.no_kursi}
+                                            readOnly
+                                        />
+                                    </div>
                                     <div className="flex flex-col gap-1">
                                         <Label htmlFor={`nik-${index}`}>NIK</Label>
                                         <Input
