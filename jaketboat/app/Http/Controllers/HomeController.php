@@ -2,6 +2,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Param;
+use App\Models\Passenger;
+use App\Models\Ticket;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -142,7 +145,50 @@ class HomeController extends Controller
                 }
             }
         }
-        return Inertia::render('pesan_detail',["tiket"=>$tiket,"list_kursi"=>$selectedKursi]);       
+        return Inertia::render('pesan_detail', [
+            "tiket" => $tiket,
+            "list_kursi" => $selectedKursi,
+            "paymentData" => session('paymentData'),
+        ]);
+    }
+
+    public function submitPassengers($payment_code, Request $request)
+    {
+        $request->validate([
+            'passengers'             => 'required|array',
+            'passengers.*.nik'       => 'required|digits:16',
+            'passengers.*.nama'      => 'required|string|max:255',
+            'passengers.*.foto_ktp'  => 'required|image|max:5120',
+        ]);
+
+        $niks = collect($request->input('passengers'))->pluck('nik');
+        if ($niks->count() !== $niks->unique()->count()) {
+            return back()->withErrors(['passengers' => 'NIK tidak boleh sama antar penumpang.']);
+        }
+
+        $tiket = Ticket::where('payment_code', $payment_code)->firstOrFail();
+
+        foreach ($request->input('passengers') as $index => $p) {
+            $request->file("passengers.{$index}.foto_ktp")->store('ktp', 'public');
+
+            Passenger::create([
+                'id_request'   => $tiket->id,
+                'nik'          => $p['nik'],
+                'name'         => $p['nama'],
+                'code'         => $index,
+                'booking_code' => $payment_code . '-' . $index,
+            ]);
+        }
+
+        $paymentUrl = Param::where('key', 'PAYMENT_URL')->value('value');
+
+        session()->flash('paymentData', [
+            'payment_url'  => $paymentUrl,
+            'order_id'     => $payment_code,
+            'gross_amount' => $tiket->total_payment,
+        ]);
+
+        return to_route('request_order_detail', $payment_code);
     }
 
     public function kursi_available($no,$id_schedule){
