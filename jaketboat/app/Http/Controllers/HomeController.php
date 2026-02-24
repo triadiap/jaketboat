@@ -227,4 +227,32 @@ class HomeController extends Controller
         }
         return $available;
     }
+
+    public function payment_page(Request $request) {
+        $client = new Client();
+        $serverKey = env('APP_DEBUG') ? get_param('MIDTRANS_SERVER_KEY_SB') : get_param('MIDTRANS_SERVER_KEY_PROD');
+        $transaction_endpoint = env('APP_DEBUG') ? get_param('MIDTRANS_TRANSACTION_API_SB') : get_param('MIDTRANS_TRANSACTION_API_PROD');
+        
+        $final_amount = (int)$request->gross_amount + (int)get_param('ADMIN_FEE');
+        $response = $client->request('POST', $transaction_endpoint, [
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Basic ' . base64_encode($serverKey),
+            ],
+            'body' => json_encode([
+                'transaction_details' => [
+                    'order_id' => $request->order_id,
+                    'gross_amount' => $final_amount,
+                ],
+            ]),
+        ]);
+        $data = json_decode($response->getBody(), true);
+        
+        return view('payment', [
+            'snap_token' => $data['token'],
+            'js_endpoint' => env('APP_DEBUG') ? get_param('MIDTRANS_JS_ENDPOINT_SB') : get_param('MIDTRANS_JS_ENDPOINT_PROD'),
+            'client_key' => get_param('MIDTRANS_CLIENT_KEY')
+        ]);
+    }
 }
