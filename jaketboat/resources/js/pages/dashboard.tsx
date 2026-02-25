@@ -61,17 +61,16 @@ export default function Dashboard({destination,formData,result}:SeachProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pesan Tiket" />
-
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="flex overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <div className="md:flex-1"></div>
-                    <div className="md:flex-1"></div>
-                    <div className = "sm:flex-1 xs:flex-1 md:w-[300px] rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4 m-4 md:mr-10" >
+            <div className="lex h-full flex-1 flex-col overflow-x-auto">
+                <div className="flex bg-linear-to-r from-cyan-500 to-blue-500 bg-[url(/images/JAKETBOAT.png)] bg-fit overflow-hidden rounded-sm border border-sidebar-border/70 dark:border-sidebar-border">
+                    <div className="none md:flex-1"></div>
+                    <div className="none md:flex-1"></div>
+                    <div className = "bg-white flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4 m-4 md:mr-10" >
                         <Heading
                             title='Pilih Rute'
                         ></Heading>
                         <Form 
-                        {...HomeController.dashboard.form()}
+                        {...HomeController.dashboard['/'].form}
                         options={{
                             preserveScroll: true,
                         }}
@@ -167,7 +166,7 @@ export default function Dashboard({destination,formData,result}:SeachProps) {
                         </Form>
                     </div>
                 </div>
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+                <div className="p-4 grid auto-rows-min gap-4 md:grid-cols-3">
                     {result.map((item) => (
                         <div className="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <Card className="rounded-xl">

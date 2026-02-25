@@ -27,9 +27,9 @@ class HomeController extends Controller
         $destination = DB::table("tb_destination")->select('id','name')->get();        
 
         $result = array();
-        $from = $request->get('from', 1);
-        $to = $request->get('to', 1);
-        $date = $request->get('date',Date('%Y-%m-%d'));
+        $from = $request->get('from', "1");
+        $to = $request->get('to', "1");
+        $date = $request->get('date',Date('Y-m-d'));
         $person = $request->get('person', 1);
         
         $form["from"] = $from;
@@ -110,8 +110,14 @@ class HomeController extends Controller
     }
     public function order(Request $request):Response
     {
-        $ship = DB::table("tb_ship")->select('id','name')->get();        
-        return Inertia::render('ship',["ship"=>$ship]);       
+        $id_customer = auth()->id();
+        $ticket = DB::table("tb_ticket")
+            ->select("tb_ticket.*","tb_ship.name","tb_schedule.tanggal","tb_schedule.jam_berangkat")
+            ->join("tb_schedule","tb_schedule.id","tb_ticket.id_schedule")
+            ->join("tb_ship","tb_schedule.id_ship","tb_ship.id")
+            ->where("id_customer",$id_customer)
+            ->get();        
+        return Inertia::render('ticket',["ListTicket"=>$ticket]);       
     }
     public function pesan($id,Request $request){
         $data["id_schedule"] = $id;
@@ -119,6 +125,8 @@ class HomeController extends Controller
         $data["total_passenger"] = session("person");
         $payment_code = Str::random(16); 
         $data["payment_code"]=$payment_code;
+        $data["id_destination_from"] = session("from");
+        $data["id_destination_to"] = session("to");
         $data["total_payment"] = DB::table("tb_schedule")->where("id",$id)->value("price")*session("person");
         DB::table("tb_ticket")->insert($data);
         return to_route('request_order_detail',$payment_code);
@@ -256,6 +264,24 @@ class HomeController extends Controller
             'snap_token' => $data['token'],
             'js_endpoint' => $isDebug ? $param['MIDTRANS_JS_ENDPOINT_SB'] : $param['MIDTRANS_JS_ENDPOINT_PROD'],
             'client_key' => $isDebug ? $param['MIDTRANS_CLIENT_KEY_SB'] : $param['MIDTRANS_CLIENT_KEY_PROD']
+        ]);
+    }
+
+    public function view_ticket($id,Request $request){
+        $passanger = DB::table("tb_passenger")->where("id_request",$id)->get();
+        $detail = DB::table("tb_ticket")
+            ->select("tb_ship.name","tb_schedule.*","tb_ticket.id_destination_from","tb_ticket.id_destination_to")
+            ->join("tb_schedule","tb_schedule.id","tb_ticket.id_schedule")
+            ->join("tb_ship","tb_ship.id","tb_schedule.id_ship")
+            ->where("tb_ticket.id",$id)->first();
+        $detail->jam_berangkat = substr($detail->jam_berangkat,0,5);
+        $detail->jam_sampai = date('H:i', strtotime($detail->jam_berangkat . ' +2 hour'));
+        $detail->from = DB::table("tb_destination")->where("id",$detail->id_destination_from)->value("name");
+        $detail->to = DB::table("tb_destination")->where("id",$detail->id_destination_to)->value("name");
+
+        return Inertia::render('view_ticket', [
+            "ListPassanger" => $passanger,
+            "detail" => $detail,
         ]);
     }
 }
