@@ -18,6 +18,8 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Support\Facades\Cache;
+
 
 
 
@@ -175,30 +177,39 @@ class HomeController extends Controller
         $tiket = DB::table("tb_ticket")->where("payment_code",$payment_code)->first();
         $arrKursi = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,18,20,21,22,23,24,25,26,27,28,29,30];
         $selectedKursi = array();
-        for($i=0; $i < $tiket->total_passenger;$i++){
-            $indexKursi = 0;
-            $cek = true;
-            while($cek){
-                if($indexKursi < count($arrKursi)){
-                if(!in_array($arrKursi[$indexKursi], $selectedKursi, true)){
-                    if($this->kursi_available($arrKursi[$indexKursi],$tiket->id_schedule)){
-                        $cek = false;
-                        $kursi["id"]=$i;
-                        $kursi["no_kursi"] = $arrKursi[$indexKursi];
-                        array_push($selectedKursi,$kursi);
+        $lock = Cache::lock('schedule_'.$tiket->id_schedule, 10);
+        if($lock->get()){            
+            DB::table("tb_reserve_slot")
+                ->where("id_schedule",$tiket->id_schedule) 
+                ->where("id_customer",auth()->id())
+                ->delete();
+            for($i=0; $i < $tiket->total_passenger;$i++){
+                $indexKursi = 0;
+                $cek = true;
+                while($cek){
+                    if($indexKursi < count($arrKursi)){
+                    if(!in_array($arrKursi[$indexKursi], $selectedKursi, true)){
+                        if($this->kursi_available($arrKursi[$indexKursi],$tiket->id_schedule,$i)){
+                            $cek = false;
+                            $kursi["id"]=$i;
+                            $kursi["no_kursi"] = $arrKursi[$indexKursi];
+                            array_push($selectedKursi,$kursi);
+                        }else{
+                            DB::table("tb_reserve_slot")
+                                ->where("code",$arrKursi[$indexKursi])
+                                ->where("id_schedule",$tiket->id_schedule) 
+                                ->where("id_customer",auth()->id())
+                                ->where("index",$i)
+                                ->delete();
+                        }
+                    }
+                    $indexKursi++;
                     }else{
-                        DB::table("tb_reserve_slot")
-                            ->where("code",$arrKursi[$indexKursi])
-                            ->where("id_schedule",$tiket->id_schedule) 
-                            ->where("id_customer",auth()->id())
-                            ->delete();
+                        $cek=false;
                     }
                 }
-                $indexKursi++;
-                }else{
-                    $cek=false;
-                }
             }
+            $lock->release();
         }
         return Inertia::render('pesan_detail', [
             "tiket" => $tiket,
@@ -249,7 +260,7 @@ class HomeController extends Controller
         return to_route('request_order_detail', $payment_code);
     }
 
-    public function kursi_available($no,$id_schedule){
+    public function kursi_available($no,$id_schedule,$index){
         $available = true;        
         $allDestination=DB::table("tb_route_detail")
             ->select("tb_destination.*")
@@ -293,6 +304,7 @@ class HomeController extends Controller
                     $dReserve["id_schedule"] = $id_schedule;
                     $dReserve["id_destination"] =$itemDest->id;
                     $dReserve["id_customer"] =  auth()->id();
+                    $dReserve["index"] =  $index;
                     DB::table("tb_reserve_slot")->insert($dReserve);
                 }
             }

@@ -31,7 +31,7 @@ export default function AuthCardLayout({
                 <div className="flex flex-col gap-6">
                     <Card className="rounded-xl">
                         <CardHeader className="px-10 pb-0 text-center">                                
-                        <div className="h-12 w-12 self-center mb-5">
+                        <div className="h-18 w-18 self-center mb-5">
                             <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
                         </div>
                         <CardTitle className="text-xl">{title}</CardTitle>

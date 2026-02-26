@@ -171,7 +171,7 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                         <div key={item.id} className="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <Card className="rounded-xl">
                                 <CardHeader className="pb-2 pl-4 pt-4">
-                                    <CardTitle className="text-base">Data penumpang {(list_kursi.length > 1) && "ke-"&& index }</CardTitle>
+                                    <CardTitle className="text-base">Data penumpang {(list_kursi.length > 1) && "ke-"&& (index+1) }</CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3 pl-4 pr-4 pb-4">
                                     <div className="flex flex-col gap-1">
