@@ -22,6 +22,14 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useEffect, useState } from 'react';
+import { Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+ } from '@/components/ui/select';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -44,6 +52,8 @@ type PaymentData = {
 interface PassengerData {
     nik: string;
     nama: string;
+    titles:string;
+    type_identity:string;
     foto_ktp: File | null;
     no_kursi: string;
 }
@@ -53,6 +63,8 @@ interface PassengerErrors {
     nama?: string;
     foto_ktp?: string;
     no_kursi?: string;
+    titles?: string;
+    type_identity?: string;
 }
 
 interface SeachProps {
@@ -63,7 +75,7 @@ interface SeachProps {
 
 export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps) {
     const [passengers, setPassengers] = useState<PassengerData[]>(
-        list_kursi.map((item) => ({ nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi }))
+        list_kursi.map((item) => ({titles:'',type_identity:'', nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi }))
     );
     const [errors, setErrors] = useState<PassengerErrors[]>(
         list_kursi.map(() => ({}))
@@ -131,6 +143,8 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
         passengers.forEach((p, i) => {
             formData.append(`passengers[${i}][nik]`, p.nik);
             formData.append(`passengers[${i}][nama]`, p.nama);
+            formData.append(`passengers[${i}][type_identity]`, p.type_identity);
+            formData.append(`passengers[${i}][titles]`, p.titles);
             if (p.foto_ktp) {
                 formData.append(`passengers[${i}][foto_ktp]`, p.foto_ktp);
             }
@@ -148,13 +162,16 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Detail Penumpang" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <Heading title="Detail Penumpang" />
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+                <Heading title="Detail Penumpang"
+                    description='Silahkan isikan data sesuai KTP penumpang'
+                    variant='small'
+                />
+                <div className="grid auto-rows-min gap-4 md:grid-cols-3 ">
                     {list_kursi.map((item, index) => (
                         <div key={item.id} className="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <Card className="rounded-xl">
                                 <CardHeader className="pb-2 pl-4 pt-4">
-                                    <CardTitle className="text-base">Penumpang ke-{index + 1}</CardTitle>
+                                    <CardTitle className="text-base">Data penumpang {(list_kursi.length > 1) && "ke-"&& index }</CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3 pl-4 pr-4 pb-4">
                                     <div className="flex flex-col gap-1">
@@ -163,8 +180,6 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                             id={`nokursi-${index}`}
                                             type="text"
                                             inputMode="numeric"
-                                            maxLength={16}
-                                            placeholder="16 digit NIK"
                                             value={passengers[index].no_kursi}
                                             onChange={e =>
                                                 updatePassenger(index, 'no_kursi', e.target.value.replace(/\D/g, '').slice(0, 16))
@@ -172,21 +187,43 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                             aria-invalid={!!errors[index]?.no_kursi}
                                             readOnly
                                         />
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-muted-foreground ml-auto text-xs">
+                                                Otomatis dari sistem
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <Label htmlFor={`nik-${index}`}>NIK</Label>
-                                        <Input
-                                            id={`nik-${index}`}
-                                            type="text"
-                                            inputMode="numeric"
-                                            maxLength={16}
-                                            placeholder="16 digit NIK"
-                                            value={passengers[index].nik}
-                                            onChange={e =>
-                                                updatePassenger(index, 'nik', e.target.value.replace(/\D/g, '').slice(0, 16))
-                                            }
-                                            aria-invalid={!!errors[index]?.nik}
-                                        />
+                                        <Label htmlFor={`nik-${index}`}>No. Identity</Label>
+                                        <div className='flex'>
+                                            <div className='flex-none w-[100px]'>
+                                                <Select name="type_identity" onValueChange={(val)=>updatePassenger(index, 'type_identity', val)} defaultValue={passengers[index].type_identity}>
+                                                    <SelectTrigger id={`type_identity-${index}`} className="w-full">
+                                                        <SelectValue placeholder=""  />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectItem  value="ktp">KTP</SelectItem>
+                                                            <SelectItem  value="paspor">Paspor</SelectItem>
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className='flex-1 pl-2'>
+                                                <Input
+                                                    id={`nik-${index}`}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    maxLength={16}
+                                                    placeholder="16 digit NIK"
+                                                    value={passengers[index].nik}
+                                                    onChange={e =>
+                                                        updatePassenger(index, 'nik', e.target.value.replace(/\D/g, '').slice(0, 16))
+                                                    }
+                                                    aria-invalid={!!errors[index]?.nik}
+                                                />
+                                            </div>
+                                        </div>
                                         <div className="flex items-center justify-between">
                                             <InputError message={errors[index]?.nik} />
                                             <span className="text-muted-foreground ml-auto text-xs">
@@ -196,18 +233,40 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <Label htmlFor={`nama-${index}`}>Nama</Label>
-                                        <Input
-                                            id={`nama-${index}`}
-                                            type="text"
-                                            placeholder="Nama sesuai KTP"
-                                            value={passengers[index].nama}
-                                            onChange={e => updatePassenger(index, 'nama', e.target.value)}
-                                            aria-invalid={!!errors[index]?.nama}
-                                        />
+                                        <div className='flex'>
+                                            <div className='flex-none w-[100px]'>
+                                                <Select onValueChange={(val)=>updatePassenger(index, 'titles', val)}  defaultValue={passengers[index].titles}>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Title"  />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectItem  value="Tn">Tuan</SelectItem>
+                                                            <SelectItem  value="Ny">Nyonya</SelectItem>
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className='flex-1 pl-2'>
+                                                <Input
+                                                    id={`nama-${index}`}
+                                                    type="text"
+                                                    placeholder="Nama sesuai KTP"
+                                                    value={passengers[index].nama}
+                                                    onChange={e => updatePassenger(index, 'nama', e.target.value)}
+                                                    aria-invalid={!!errors[index]?.nama}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-muted-foreground ml-auto text-xs">
                                         <InputError message={errors[index]?.nama} />
+                                                Pastikan nama sesuai ktp
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <Label htmlFor={`foto-${index}`}>Foto KTP</Label>
+                                        <Label htmlFor={`foto-${index}`}>Foto Identitas</Label>
                                         <Input
                                             id={`foto-${index}`}
                                             type="file"
@@ -217,7 +276,10 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                             }
                                             aria-invalid={!!errors[index]?.foto_ktp}
                                         />
-                                        <InputError message={errors[index]?.foto_ktp} />
+                                            <span className="text-muted-foreground ml-auto text-xs">
+                                                <InputError message={errors[index]?.foto_ktp} />
+                                                Pastikan file identitas sesuai
+                                            </span>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -226,7 +288,7 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                 </div>
                 <div className="flex justify-end pt-2">
                     <Button size="lg" onClick={handleSubmit}>
-                        PESAN TIKET
+                        PESAN SEKARANG
                     </Button>
                 </div>
             </div>

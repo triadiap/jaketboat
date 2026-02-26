@@ -52,38 +52,46 @@ export default function Ticket({ListTicket}:Props) {
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <Heading
-                title='Tiket Saya'
-                description='Daftar Tiket Saya'
+                variant='small'
+                title='Daftar Pesanan'
+                description='Data pesanan tiket'
             ></Heading>
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                     {ListTicket.map((item) => (
-                    <div className="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <Card className="rounded-xl">
+                    <div className="relative overflow-hidden">
+                        <Card>
                             <CardContent className="pl-4 pr-4">
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                                <div className='flex'>
+                                    <div className='flex-1'>
+                                                                        <div className="flex items-center gap-2 ">
                                     <Ship className="h-4 w-4 shrink-0" />
-                                    <span>{item.name}</span>
+                                    <span>{item.name.toUpperCase()}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                                <div className="flex items-center gap-2">
                                 <CalendarDays className="h-4 w-4 shrink-0" />
                                 <span>{formatDate(item.tanggal)}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                                <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 shrink-0" />
                                     <span>{item.jam_berangkat}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                                <div className="flex items-center gap-2">
                                     <User2 className="h-4 w-4 shrink-0" />
                                     <span>{item.total_passenger}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                                <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 shrink-0" />
-                                    <span>{item.status}</span>
+                                    <span>{(item.status=="paid")?"TIket sudah tersedia":"Menunggu tiket tergenerate"}</span>
+                                </div>
+
+                                    </div>
+                                <div className='flex-none w-[150px] text-justify text-xs'>Pastikan anda hadir 1 jam sebelum keberangkatan. Dengan membawah tiket dan KTP yang sesuai</div>
+ 
                                 </div>
                                 <a href={view_ticket.url(item.id)}>
-                                <Button variant="outline" className="w-full">
+                                {(item.status=="paid") && <Button variant="outline" className="w-full mt-5">
                                     Lihat Detail
-                                </Button>
+                                </Button>}
                                 </a>
                             </CardContent>
                         </Card>

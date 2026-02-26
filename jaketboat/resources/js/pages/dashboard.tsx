@@ -62,13 +62,12 @@ export default function Dashboard({destination,formData,result}:SeachProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pesan Tiket" />
             <div className="lex h-full flex-1 flex-col overflow-x-auto">
-                <div className="flex bg-linear-to-r from-cyan-500 to-blue-500 bg-[url(/images/JAKETBOAT.png)] bg-fit overflow-hidden rounded-sm border border-sidebar-border/70 dark:border-sidebar-border">
+                <div className="flex bg-linear-to-r from-cyan-500 to-blue-500 bg-[url(/images/JAKETBOAT.png)] bg-fit overflow-hidden border border-sidebar-border/70 dark:border-sidebar-border">
                     <div className="none md:flex-1"></div>
                     <div className="none md:flex-1"></div>
                     <div className = "bg-white flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4 m-4 md:mr-10" >
-                        <Heading
-                            title='Pilih Rute'
-                        ></Heading>
+                        <p className='font-bold mb-10'                            
+                        >Pilih Rute</p>
                         <Form 
                         {...HomeController.dashboard['/'].form}
                         options={{
@@ -166,6 +165,9 @@ export default function Dashboard({destination,formData,result}:SeachProps) {
                         </Form>
                     </div>
                 </div>
+                <div className='font-bold p-4'>
+                    {(result.length > 0) && <p>Tiket Tersedia</p>}
+                </div>
                 <div className="p-4 grid auto-rows-min gap-4 md:grid-cols-3">
                     {result.map((item) => (
                         <div className="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
@@ -176,19 +178,19 @@ export default function Dashboard({destination,formData,result}:SeachProps) {
                                             <span className='font-bold text-lg text-blue-500'>{item.time}</span>
                                         </div>
                                         <div className='flex-1'>
-                                            <h2 className='font-bold'>{item.ship}</h2>
+                                            <h2 className='font-bold'>{item.ship.toUpperCase()}</h2>
                                             <h1>{item.type}</h1>
-                                            <h1>{item.available} Kuri Tersisa</h1>
+                                            <h1>{item.available} Kursi Tersisa</h1>
                                         </div>
                                         <div className='flex-none h-full'>
-                                            <h1>{item.price}</h1>
+                                            <p className='font-bold'>IDR {item.price}</p>
                                             <a href={pesan.url(item.id)}>
                                                 <Button className='h-full'>Pilih</Button>
                                             </a>
                                         </div>
                                    </div>
                                    <div className='flex pt-2'>
-                                        <span className='text-center font-bold text-xs text-blue-400'>{item.route}</span>
+                                        <span className='text-center font-bold text-xs text-blue-400'>RUTE : {item.route}</span>
                                    </div>
                                 </CardContent>
                             </Card>

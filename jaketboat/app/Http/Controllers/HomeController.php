@@ -14,6 +14,10 @@ use Inertia\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 
 
 
@@ -22,6 +26,37 @@ class HomeController extends Controller
     /**
      * Show the user's profile settings page.
      */
+    public function qrCode(string $booking_code)
+    {
+        $passenger = Passenger::with('ticket.schedule.ship')
+            ->where('booking_code', $booking_code)
+            ->first();
+
+        if (!$passenger) {
+            abort(404, 'Booking code not found');
+        }
+
+        $schedule = $passenger->ticket->schedule;
+
+        $payload = json_encode([
+            'booking_code' => $passenger->booking_code,
+            'nik'          => $passenger->nik,
+            'name'         => $passenger->name,
+            'nama_kapal'   => $schedule->ship->name,
+            'kursi'        => $passenger->code,
+            'tanggal'      => $schedule->tanggal,
+            'jam'          => $schedule->jam_berangkat,
+        ]);
+
+        $renderer = new ImageRenderer(
+            new RendererStyle(300),
+            new SvgImageBackEnd()
+        );
+
+        $svg = (new Writer($renderer))->writeString($payload);
+
+        return response($svg, 200)->header('Content-Type', 'image/svg+xml');
+    }
     public function dashboard(Request $request): Response
     {
         $destination = DB::table("tb_destination")->select('id','name')->get();        
@@ -77,8 +112,12 @@ class HomeController extends Controller
                         ->where("id_destination",$itemDest->id)
                         ->where("availability","0")
                         ->count();
-                    if($tmpAvailable<$available){
-                        $available=$tmpAvailable;
+                    $tmpReserve = DB::table("tb_reserve_slot")
+                        ->where("id_schedule",$tmp->id)
+                        ->where("id_destination",$itemDest->id)
+                        ->count();
+                    if(($tmpAvailable - $tmpReserve) <$available){
+                        $available=$tmpAvailable - $tmpReserve;
                     }
                 }
                 array_push($arrDestination,$itemDest->short_name);
@@ -116,6 +155,7 @@ class HomeController extends Controller
             ->join("tb_schedule","tb_schedule.id","tb_ticket.id_schedule")
             ->join("tb_ship","tb_schedule.id_ship","tb_ship.id")
             ->where("id_customer",$id_customer)
+            ->orderBy("tb_ticket.id","desc")
             ->get();        
         return Inertia::render('ticket',["ListTicket"=>$ticket]);       
     }
@@ -144,8 +184,14 @@ class HomeController extends Controller
                     if($this->kursi_available($arrKursi[$indexKursi],$tiket->id_schedule)){
                         $cek = false;
                         $kursi["id"]=$i;
-                        $kursi["no_kursi"]=$arrKursi[$indexKursi];
+                        $kursi["no_kursi"] = $arrKursi[$indexKursi];
                         array_push($selectedKursi,$kursi);
+                    }else{
+                        DB::table("tb_reserve_slot")
+                            ->where("code",$arrKursi[$indexKursi])
+                            ->where("id_schedule",$tiket->id_schedule) 
+                            ->where("id_customer",auth()->id())
+                            ->delete();
                     }
                 }
                 $indexKursi++;
@@ -186,7 +232,9 @@ class HomeController extends Controller
                 'nik'          => $p['nik'],
                 'name'         => $p['nama'],
                 'code'         => $p['no_kursi'],
-                'booking_code' => $payment_code . '-' . $index,
+                'titles'         => $p['titles'],
+                'type_identity'         => $p['type_identity'],
+                'booking_code' => strtoupper(Str::random(6)),
             ]);
         }
 
@@ -231,6 +279,21 @@ class HomeController extends Controller
                     ->first();
                 if($tmpAvailable){
                     $available = false;
+                }                
+                $tmpReserve = DB::table("tb_reserve_slot")
+                    ->where("id_schedule",$id_schedule)
+                    ->where("id_destination",$itemDest->id)
+                    ->where("code",$no)
+                    ->first();
+                if($tmpReserve){
+                    $available = false;
+                }
+                if($available){
+                    $dReserve["code"] = $no;
+                    $dReserve["id_schedule"] = $id_schedule;
+                    $dReserve["id_destination"] =$itemDest->id;
+                    $dReserve["id_customer"] =  auth()->id();
+                    DB::table("tb_reserve_slot")->insert($dReserve);
                 }
             }
         }
@@ -244,6 +307,7 @@ class HomeController extends Controller
         $serverKey = $isDebug ? $param['MIDTRANS_SERVER_KEY_SB'] : $param['MIDTRANS_SERVER_KEY_PROD'];
         $transaction_endpoint = $isDebug ? $param['MIDTRANS_TRANSACTION_API_SB'] : $param['MIDTRANS_TRANSACTION_API_PROD'];
         
+        $customer = DB::table("users")->where("id",auth()->id())->first();
         $final_amount = (int)$request->gross_amount + (int)$param['ADMIN_FEE'];
         $response = $client->request('POST', $transaction_endpoint, [
             'headers' => [
@@ -256,6 +320,23 @@ class HomeController extends Controller
                     'order_id' => $request->order_id,
                     'gross_amount' => $final_amount,
                 ],
+                'item_details'=> [
+                    [
+                        "id"=>"01",
+                        "price"=>$request->gross_amount,
+                        "quantity"=>1,
+                        "name"=>"Harga Tiket"
+                    ],[
+                        "id"=>"02",
+                        "price"=>$param['ADMIN_FEE'],
+                        "quantity"=>1,
+                        "name"=>"Harga Layanan"
+                    ],
+                ],
+                'customer_details'=>[
+                    "first_name"=> $customer->name,
+                    "email"=> $customer->email,
+                ]
             ]),
         ]);
         $data = json_decode($response->getBody(), true);

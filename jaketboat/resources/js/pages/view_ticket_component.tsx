@@ -50,6 +50,9 @@ type Passenger = {
     name:string;
     booking_code:string;
     code:string;
+    nik:string;
+    type_identity:string;
+    titles:string;
 }
 
 interface Props{
@@ -74,47 +77,39 @@ export const ViewTicketComponent =({detail,item}:Props)=>{
                     DISHUB DKI Jakarta
                     </div>
                 </div>                            
-                <div className="py-2 px-4 flex flex-col text-sm bg-gray-100 ">
+                <div className="gap-1 py-2 px-4 flex flex-col bg-gray-100 ">
                     <p className="self-start font-bold text-blue-900 text-xl">{detail.jam_berangkat}</p>
-                    <p className="font-bold text-gray-800">{detail.from}</p>
-                    <p className="text-center text-gray-800">2 Jam, {formatDate(detail.tanggal)}</p>          
-                    <p className="self-start font-bold text-blue-900 text-xl">{detail.jam_sampai}</p>
-                    <p className="font-bold text-gray-800">{detail.to}</p>                  
+                    <p className="font-bold text-gray-800">Keberangkatan : {detail.from}</p>
+                    <p className="self-start font-bold text-blue-900 text-xl pt-2" >{detail.jam_sampai}</p>
+                    <p className="font-bold text-gray-800">Tujuan : {detail.to}</p>                  
+                    <p className="text-gray-800 pt-2">Estimasi : 2 Jam, {formatDate(detail.tanggal)}</p>          
                 </div>
                 <hr className="border-dashed border-1 border-gray-400"/>
-                <div className="py-2 px-4 flex flex-col text-sm bg-white ">
-                    <p className="self-start font-bold text-blue-900 text-lg">KAPAL : <span className='text-gray-800'>{detail.name}</span></p>               
+                <div className="py-2 px-4 flex flex-col bg-white ">
+                    <p className="self-start font-bold text-blue-900 text-lg">KAPAL : <span className='text-gray-800'>{detail.name.toUpperCase()}</span></p>               
                 </div>                            
                 <hr className="border-dashed border-1 border-gray-400"/>
-                <div className="py-2 px-4 flex flex-col text-sm bg-white ">
-                    <div className="flex text-sm justify-between my-2">
-                        <p className=" text-gray-500">PENUMPANG</p>  
-                        <p className="text-gray-500">NOMOR TIKET</p>  
-                    </div>             
-                    <div className="flex text-sm justify-between my-2">
-                        <p className="font-bold text-gray-800">{item.name}</p>  
-                        <p className="font-bold text-gray-800">{item.booking_code}</p>  
-                    </div>             
-                </div>
-                <div className="py-2 px-4 flex flex-col text-sm bg-white ">
-                    <div className="flex text-sm justify-between my-2">
-                        <p className=" text-gray-500">TYPE ID</p>  
-                        <p className="text-gray-500">NO. ID</p>  
-                    </div>             
-                    <div className="flex text-sm justify-between my-2">
-                        <p className="font-bold text-gray-800">KTP</p>  
-                        <p className="font-bold text-gray-800">****************</p>  
+                <div className="py-2 px-4 flex flex-col  bg-white ">
+                    <div className="flex grid auto-rows-min gap-2 grid-cols-2">
+                        <div className=" text-gray-500">PENUMPANG</div>  
+                        <div className="text-gray-500">NOMOR TIKET</div>  
+                        <div className="font-bold text-gray-800">{item.titles.toUpperCase()+". "+item.name.toUpperCase()}</div>  
+                        <div className="font-bold text-gray-800">{item.booking_code}</div>  
+                        <div className="text-gray-500">TYPE ID</div>  
+                        <div className="text-gray-500">NO. ID</div>  
+                        <div className="font-bold text-gray-800">{item.type_identity.toUpperCase()}</div>  
+                        <div className="font-bold text-gray-800">*************{item.nik.slice(-3)}</div>  
                     </div>             
                 </div>
                 <hr className="border-dashed border-2 border-gray-400"/>
                 <div className="py-2 px-4 flex-col flex text-center bg-gray-100">
                     <img className="mx-auto"
-                        src={"https://adminjaketboat.icsp.co.id/ticket/qr/"+item.booking_code}
+                        src={"/qr_code/"+item.booking_code}
                         />
-                        <p className="font-bold text-lg">Scan here to check in!</p>
+                        <p className="font-bold">Scan here to check in!</p>
                 </div>
-                <div className="py-2 px-4 flex flex-col text-sm ">
-                    <p className="self-start font-bold text-gray-500">Dokumen ini sah sebagai tiket. Simpan dengan aman</p>
+                <div className="py-2 px-4 flex flex-col text-xs ">
+                    <p className="text-center font-bold text-gray-500">Dokumen ini sah sebagai tiket. Simpan dengan aman</p>
                 </div>
             </div>
             </div>            

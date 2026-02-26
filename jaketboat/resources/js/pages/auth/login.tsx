@@ -24,8 +24,8 @@ export default function Login({
 }: Props) {
     return (
         <AuthLayout
-            title="Log in to your account"
-            description="Enter your email and password below to log in"
+            title="Masuk kedalam akun anda"
+            description="Silahkan masukkan email dan password anda"
         >
             <Head title="Log in" />
 
@@ -38,7 +38,7 @@ export default function Login({
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -61,7 +61,7 @@ export default function Login({
                                             className="ml-auto text-sm"
                                             tabIndex={5}
                                         >
-                                            Forgot password?
+                                            Lupa password?
                                         </TextLink>
                                     )}
                                 </div>
@@ -83,7 +83,7 @@ export default function Login({
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember">Ingat saya</Label>
                             </div>
 
                             <Button
@@ -100,9 +100,9 @@ export default function Login({
 
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
+                                Tidak memiliki akun ?{' '}
                                 <TextLink href={register()} tabIndex={5}>
-                                    Sign up
+                                    Daftar
                                 </TextLink>
                             </div>
                         )}

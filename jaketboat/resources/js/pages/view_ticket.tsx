@@ -112,7 +112,7 @@ export default function view_ticket({ detail, ListPassanger }: Props) {
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const pageWidth = pdf.internal.pageSize.getWidth();
             const margin = 10;
-            const imgWidth = pageWidth - margin * 2;
+            const imgWidth = pageWidth/2 - margin * 2;
 
             for (let i = 0; i < tickets.length; i++) {
                 const dataUrl = await toPng(tickets[i], {
@@ -144,11 +144,7 @@ export default function view_ticket({ detail, ListPassanger }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tiket Saya" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <Heading
-                    title="Tiket Saya"
-                    description="Daftar Tiket Saya"
-                />
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
                 <div id="ticket-print-area" className="grid auto-rows-min gap-4 md:grid-cols-3">
                     {ListPassanger.map((item) => (
                         <ViewTicketComponent key={item.booking_code} detail={detail} item={item} />

@@ -17,5 +17,6 @@ Route::get('view_ticket/{id}',[HomeController::class, 'view_ticket'] )->middlewa
 Route::post('pesan_tiket_detail/{payment_code}',[HomeController::class, 'submitPassengers'] )->middleware(['auth', 'verified'])->name('submit_passenger');
 Route::get('search',[HomeController::class, 'search'] )->middleware(['auth', 'verified'])->name('dashboard.search');
 Route::get('/payment', [HomeController::class, 'payment_page'])->name('payment');
+Route::get('/qr_code/{payment_code}', [HomeController::class, 'qrCode'])->name('qr_code');
 
 require __DIR__.'/settings.php';
