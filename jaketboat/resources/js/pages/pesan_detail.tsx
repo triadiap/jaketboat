@@ -41,6 +41,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export type PageResult = {
     id: number;
     no_kursi: string;
+    no_kursi_p: string;
 }
 
 type PaymentData = {
@@ -56,6 +57,7 @@ interface PassengerData {
     type_identity:string;
     foto_ktp: File | null;
     no_kursi: string;
+    no_kursi_p: string;
 }
 
 interface PassengerErrors {
@@ -63,6 +65,7 @@ interface PassengerErrors {
     nama?: string;
     foto_ktp?: string;
     no_kursi?: string;
+    no_kursi_p?: string;
     titles?: string;
     type_identity?: string;
 }
@@ -75,7 +78,7 @@ interface SeachProps {
 
 export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps) {
     const [passengers, setPassengers] = useState<PassengerData[]>(
-        list_kursi.map((item) => ({titles:'',type_identity:'', nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi }))
+        list_kursi.map((item) => ({titles:'',type_identity:'', nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi,no_kursi_p : item.no_kursi_p }))
     );
     const [errors, setErrors] = useState<PassengerErrors[]>(
         list_kursi.map(() => ({}))
@@ -149,6 +152,7 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                 formData.append(`passengers[${i}][foto_ktp]`, p.foto_ktp);
             }
             formData.append(`passengers[${i}][no_kursi]`, p.no_kursi);
+            formData.append(`passengers[${i}][no_kursi_p]`, p.no_kursi_p);
         });
 
         router.post(`/pesan_tiket_detail/${tiket.payment_code}`, formData);
@@ -176,17 +180,33 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                 <CardContent className="flex flex-col gap-3 pl-4 pr-4 pb-4">
                                     <div className="flex flex-col gap-1">
                                         <Label htmlFor={`nokursi-${index}`}>No Kursi</Label>
-                                        <Input
-                                            id={`nokursi-${index}`}
-                                            type="text"
-                                            inputMode="numeric"
-                                            value={passengers[index].no_kursi}
-                                            onChange={e =>
-                                                updatePassenger(index, 'no_kursi', e.target.value.replace(/\D/g, '').slice(0, 16))
-                                            }
-                                            aria-invalid={!!errors[index]?.no_kursi}
-                                            readOnly
-                                        />
+                                        <div className='flex-1'>
+                                            <Input
+                                                id={`nokursi-${index}`}
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={passengers[index].no_kursi}
+                                                onChange={e =>
+                                                    updatePassenger(index, 'no_kursi', e.target.value.replace(/\D/g, '').slice(0, 16))
+                                                }
+                                                aria-invalid={!!errors[index]?.no_kursi_p}
+                                                readOnly
+                                            />
+                                            
+                                        </div>
+                                        {(passengers[index].no_kursi_p) && <div className='flex-1'>
+                                            <Input
+                                                id={`nokursi-${index}`}
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={passengers[index].no_kursi_p}
+                                                onChange={e =>
+                                                    updatePassenger(index, 'no_kursi_p', e.target.value.replace(/\D/g, '').slice(0, 16))
+                                                }
+                                                aria-invalid={!!errors[index]?.no_kursi_p}
+                                                readOnly
+                                            />                                            
+                                        </div>}
                                         <div className="flex items-center justify-between">
                                             <span className="text-muted-foreground ml-auto text-xs">
                                                 Otomatis dari sistem

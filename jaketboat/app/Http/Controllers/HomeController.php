@@ -63,17 +63,25 @@ class HomeController extends Controller
     {
         $destination = DB::table("tb_destination")->select('id','name')->get();        
 
+        $idDestination = DB::table("tb_destination")->limit(1)->value("id");
+
         $result = array();
-        $from = $request->get('from', "1");
-        $to = $request->get('to', "1");
+        $result2 = array();
+        $from = $request->get('from', $idDestination."");
+        $to = $request->get('to', $idDestination."");
         $date = $request->get('date',Date('Y-m-d'));
+        $date2 = $request->get('date2');
         $person = $request->get('person', 1);
         
         $form["from"] = $from;
         $form["to"] = $to;
         $form["date"] = $date;
+        $form["date2"] = $date2;
         $form["person"] = $person;
-
+        $defRoundTrip = false;
+        if($request->get("round_trip","false") == "true"){
+            $defRoundTrip = true;
+        }
         session($form);
         $route = DB::select("select ts.id_route, ts.id,ts2.name ship,ts2.type , ts.tanggal,ts.jam_berangkat, tr.name,ts.price from tb_route tr 
             inner join tb_route_detail trd on trd.id_route = tr.id 
@@ -89,50 +97,119 @@ class HomeController extends Controller
             $items["name"]= $tmp->name;
             $items["route"] = "Muara Angke > Untung Jawa";
             $items["ship"] = $tmp->ship;
-            $items["type"] = $tmp->type;            
+            $items["type"] = $tmp->type;
+            $fromIndex = DB::table("tb_route_detail")->where("id_destination",$from)->where("id_route",$tmp->id_route)->value("id");
+            $toIndex = DB::table("tb_route_detail")->where("id_destination",$to)->where("id_route",$tmp->id_route)->value("id");              
+            if($fromIndex < $toIndex){          
 
-            $allDestination=DB::table("tb_route_detail")
-                ->select("tb_destination.*")
-                ->join("tb_destination","tb_route_detail.id_destination","tb_destination.id")
-                ->where("id_route",$tmp->id_route)
-                ->orderBy("tb_route_detail.id")
-                ->get();
-            $arrDestination = array();
-            $available =100;
-            $cek=false;
-            foreach($allDestination as $itemDest){
+                $allDestination=DB::table("tb_route_detail")
+                    ->select("tb_destination.*")
+                    ->join("tb_destination","tb_route_detail.id_destination","tb_destination.id")
+                    ->where("id_route",$tmp->id_route)
+                    ->orderBy("tb_route_detail.id")
+                    ->get();
+                $arrDestination = array();
+                $available =100;
+                $cek=false;
+                foreach($allDestination as $itemDest){
 
-                if($itemDest->id == $from){
-                    $cek = true;
-                }
-                if($itemDest->id == $to){
-                    $cek = false;
-                }
-                if($cek){
-                    $tmpAvailable = DB::table("tb_slot")
-                        ->where("id_schedule",$tmp->id)
-                        ->where("id_destination",$itemDest->id)
-                        ->where("availability","0")
-                        ->count();
-                    $tmpReserve = DB::table("tb_reserve_slot")
-                        ->where("id_schedule",$tmp->id)
-                        ->where("id_destination",$itemDest->id)
-                        ->count();
-                    if(($tmpAvailable - $tmpReserve) <$available){
-                        $available=$tmpAvailable - $tmpReserve;
+                    if($itemDest->id == $from){
+                        $cek = true;
                     }
+                    if($itemDest->id == $to){
+                        $cek = false;
+                    }
+                    if($cek){
+                        $tmpAvailable = DB::table("tb_slot")
+                            ->where("id_schedule",$tmp->id)
+                            ->where("id_destination",$itemDest->id)
+                            ->where("availability","0")
+                            ->count();
+                        $tmpReserve = DB::table("tb_reserve_slot")
+                            ->where("id_schedule",$tmp->id)
+                            ->where("id_destination",$itemDest->id)
+                            ->count();
+                        if(($tmpAvailable - $tmpReserve) <$available){
+                            $available=$tmpAvailable - $tmpReserve;
+                        }
+                    }
+                    array_push($arrDestination,$itemDest->short_name);
                 }
-                array_push($arrDestination,$itemDest->short_name);
-            }
-            $items["route"]= join(" > ",$arrDestination);
-            $items["available"] = $available;
-            $items["time"] = substr($tmp->jam_berangkat,0,5);
-            $items["price"] = number_format($tmp->price,0);
-            if($available> $person){
-                array_push($result,$items);
+                $items["route"]= join(" > ",$arrDestination);
+                $items["available"] = $available;
+                $items["time"] = substr($tmp->jam_berangkat,0,5);
+                $items["price"] = number_format($tmp->price,0);
+                if($available> $person){
+                    array_push($result,$items);
+                }
             }
         }
-        return Inertia::render('dashboard',["destination"=>$destination,'result'=>$result,'formData'=>$form]);
+
+        if($defRoundTrip){
+            $route = DB::select("select ts.id_route, ts.id,ts2.name ship,ts2.type , ts.tanggal,ts.jam_berangkat, tr.name,ts.price from tb_route tr 
+                inner join tb_route_detail trd on trd.id_route = tr.id 
+                inner join tb_destination td on td.id = trd.id_destination
+                inner join tb_schedule ts on ts.id_route = tr.id 
+                inner join tb_ship ts2 on ts2.id = ts.id_ship 
+                where td.id in($from,$to) and $from <> $to and ts.tanggal ='$date2'
+                group by ts.id_route, ts2.type,ts.price , ts.id,tr.id,ts2.name , tr.name,ts.tanggal,ts.jam_berangkat  
+                having count(*) > 1
+                order by tr.name asc;");
+
+            foreach($route as $tmp){
+                $items["id"] = $tmp->id;
+                $items["name"]= $tmp->name;
+                $items["route"] = "Muara Angke > Untung Jawa";
+                $items["ship"] = $tmp->ship;
+                $items["type"] = $tmp->type;
+                $fromIndex = DB::table("tb_route_detail")->where("id_destination",$to)->where("id_route",$tmp->id_route)->value("id");
+                $toIndex = DB::table("tb_route_detail")->where("id_destination",$from)->where("id_route",$tmp->id_route)->value("id");              
+                if($fromIndex < $toIndex){          
+
+                    $allDestination=DB::table("tb_route_detail")
+                        ->select("tb_destination.*")
+                        ->join("tb_destination","tb_route_detail.id_destination","tb_destination.id")
+                        ->where("id_route",$tmp->id_route)
+                        ->orderBy("tb_route_detail.id")
+                        ->get();
+                    $arrDestination = array();
+                    $available =100;
+                    $cek=false;
+                    foreach($allDestination as $itemDest){
+
+                        if($itemDest->id == $from){
+                            $cek = true;
+                        }
+                        if($itemDest->id == $to){
+                            $cek = false;
+                        }
+                        if($cek){
+                            $tmpAvailable = DB::table("tb_slot")
+                                ->where("id_schedule",$tmp->id)
+                                ->where("id_destination",$itemDest->id)
+                                ->where("availability","0")
+                                ->count();
+                            $tmpReserve = DB::table("tb_reserve_slot")
+                                ->where("id_schedule",$tmp->id)
+                                ->where("id_destination",$itemDest->id)
+                                ->count();
+                            if(($tmpAvailable - $tmpReserve) <$available){
+                                $available=$tmpAvailable - $tmpReserve;
+                            }
+                        }
+                        array_push($arrDestination,$itemDest->short_name);
+                    }
+                    $items["route"]= join(" > ",$arrDestination);
+                    $items["available"] = $available;
+                    $items["time"] = substr($tmp->jam_berangkat,0,5);
+                    $items["price"] = number_format($tmp->price,0);
+                    if($available> $person){
+                        array_push($result2,$items);
+                    }
+                }
+            }        
+        }
+        return Inertia::render('dashboard',["defRoundTrip"=>$defRoundTrip, "result2"=>$result2,"destination"=>$destination,'result'=>$result,'formData'=>$form]);
     }
     public function search(Request $request): Response
     {
@@ -156,27 +233,55 @@ class HomeController extends Controller
             ->select("tb_ticket.*","tb_ship.name","tb_schedule.tanggal","tb_schedule.jam_berangkat")
             ->join("tb_schedule","tb_schedule.id","tb_ticket.id_schedule")
             ->join("tb_ship","tb_schedule.id_ship","tb_ship.id")
-            ->where("id_customer",$id_customer)
+            ->join("tb_payment","tb_payment.id","tb_ticket.id_payment")
+            ->where("tb_payment.id_customer",$id_customer)
             ->orderBy("tb_ticket.id","desc")
             ->get();        
         return Inertia::render('ticket',["ListTicket"=>$ticket]);       
     }
-    public function pesan($id,Request $request){
-        $data["id_schedule"] = $id;
+    public function pesan($id_b,$id_p,Request $request){
+        $dataTiket["id_schedule"] = $id_b;
         $data["id_customer"] = auth()->id();
-        $data["total_passenger"] = session("person");
+        $dataTiket["total_passenger"] = session("person");
         $payment_code = Str::random(16); 
         $data["payment_code"]=$payment_code;
-        $data["id_destination_from"] = session("from");
-        $data["id_destination_to"] = session("to");
-        $data["total_payment"] = DB::table("tb_schedule")->where("id",$id)->value("price")*session("person");
-        DB::table("tb_ticket")->insert($data);
+        $dataTiket["id_destination_from"] = session("from");
+        $dataTiket["id_destination_to"] = session("to");
+        if($id_b > 0){
+            $data["total_payment"] = DB::table("tb_schedule")->where("id",$id_b)->value("price")*session("person")*2;
+        }else{
+            $data["total_payment"] = DB::table("tb_schedule")->where("id",$id_b)->value("price")*session("person");    
+        }
+        $idPayment = DB::table("tb_payment")->insertGetId($data);
+        $dataTiket["id_payment"] = $idPayment;
+        if($id_b > 0){
+            $dataTiket["id_schedule"] = $id_b;
+            DB::table("tb_ticket")->insert($dataTiket);
+        }
+        if($id_p > 0){
+            $dataTiket["id_schedule"] = $id_p;
+            $dataTiket["id_destination_from"] = session("to");
+            $dataTiket["id_destination_to"] = session("from");
+            DB::table("tb_ticket")->insert($dataTiket);
+        }
         return to_route('request_order_detail',$payment_code);
     }
     public function pesan_detail($payment_code,Request $request){  
-        $tiket = DB::table("tb_ticket")->where("payment_code",$payment_code)->first();
+        $tiket = DB::table("tb_ticket")
+            ->select("tb_payment.payment_code","tb_ticket.total_passenger","tb_ticket.id_schedule","tb_ticket.id_destination_from","tb_ticket.id_destination_to")
+            ->join("tb_payment","tb_payment.id","tb_ticket.id_payment")
+            ->where("tb_payment.payment_code",$payment_code)
+            ->where("tb_ticket.id_destination_from",session("from"))
+            ->first();
+        $tiket_p = DB::table("tb_ticket")
+            ->select("tb_ticket.total_passenger","tb_ticket.id_schedule","tb_ticket.id_destination_from","tb_ticket.id_destination_to")
+            ->join("tb_payment","tb_payment.id","tb_ticket.id_payment")
+            ->where("tb_payment.payment_code",$payment_code)
+            ->where("tb_ticket.id_destination_from",session("to"))
+            ->first();    
         $arrKursi = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,18,20,21,22,23,24,25,26,27,28,29,30];
         $selectedKursi = array();
+        $selectedKursi_p = array();
         $lock = Cache::lock('schedule_'.$tiket->id_schedule, 10);
         if($lock->get()){            
             DB::table("tb_reserve_slot")
@@ -189,10 +294,11 @@ class HomeController extends Controller
                 while($cek){
                     if($indexKursi < count($arrKursi)){
                     if(!in_array($arrKursi[$indexKursi], $selectedKursi, true)){
-                        if($this->kursi_available($arrKursi[$indexKursi],$tiket->id_schedule,$i)){
+                        if($this->kursi_available($arrKursi[$indexKursi],$tiket->id_schedule,$i,$tiket->id_destination_from,$tiket->id_destination_to)){
                             $cek = false;
                             $kursi["id"]=$i;
                             $kursi["no_kursi"] = $arrKursi[$indexKursi];
+                            $kursi["no_kursi_p"] = "";
                             array_push($selectedKursi,$kursi);
                         }else{
                             DB::table("tb_reserve_slot")
@@ -206,6 +312,38 @@ class HomeController extends Controller
                     $indexKursi++;
                     }else{
                         $cek=false;
+                    }
+                }
+            }
+            if($tiket_p){  
+                DB::table("tb_reserve_slot")
+                    ->where("id_schedule",$tiket_p->id_schedule) 
+                    ->where("id_customer",auth()->id())
+                    ->delete();
+                for($i=0; $i < count($selectedKursi);$i++){
+                    $indexKursi = 0;
+                    $cek = true;
+                    while($cek){
+                        if($indexKursi < count($arrKursi)){
+                        if(!in_array($arrKursi[$indexKursi], $selectedKursi_p, true)){
+                            if($this->kursi_available($arrKursi[$indexKursi],$tiket_p->id_schedule,$i,$tiket->id_destination_from,$tiket->id_destination_to)){
+                                $cek = false;
+                                $kursi["id"]=$i;
+                                $selectedKursi[$i]["no_kursi_p"] = $arrKursi[$indexKursi];
+                                array_push($selectedKursi_p,$kursi);
+                            }else{
+                                DB::table("tb_reserve_slot")
+                                    ->where("code",$arrKursi[$indexKursi])
+                                    ->where("id_schedule",$tiket_p->id_schedule) 
+                                    ->where("id_customer",auth()->id())
+                                    ->where("index",$i)
+                                    ->delete();
+                            }
+                        }
+                        $indexKursi++;
+                        }else{
+                            $cek=false;
+                        }
                     }
                 }
             }
@@ -232,7 +370,18 @@ class HomeController extends Controller
             return back()->withErrors(['passengers' => 'NIK tidak boleh sama antar penumpang.']);
         }
 
-        $tiket = Ticket::where('payment_code', $payment_code)->firstOrFail();
+        $tiket = DB::table("tb_ticket")
+            ->select("tb_payment.total_payment","tb_ticket.id","tb_ticket.total_passenger","tb_ticket.id_schedule","tb_ticket.id_destination_from","tb_ticket.id_destination_to")
+            ->join("tb_payment","tb_payment.id","tb_ticket.id_payment")
+            ->where("tb_payment.payment_code",$payment_code)
+            ->where("tb_ticket.id_destination_from",session("from"))
+            ->first();
+        $tiket_p = DB::table("tb_ticket")
+            ->select("tb_ticket.id","tb_ticket.total_passenger","tb_ticket.id_schedule","tb_ticket.id_destination_from","tb_ticket.id_destination_to")
+            ->join("tb_payment","tb_payment.id","tb_ticket.id_payment")
+            ->where("tb_payment.payment_code",$payment_code)
+            ->where("tb_ticket.id_destination_from",session("to"))
+            ->first();    
 
         foreach ($request->input('passengers') as $index => $p) {
             $file = $request->file("passengers.{$index}.foto_ktp");
@@ -247,6 +396,18 @@ class HomeController extends Controller
                 'type_identity'         => $p['type_identity'],
                 'booking_code' => strtoupper(Str::random(6)),
             ]);
+            if($tiket_p){
+                Passenger::create([
+                    'id_request'   => $tiket_p->id,
+                    'nik'          => $p['nik'],
+                    'name'         => $p['nama'],
+                    'code'         => $p['no_kursi_p'],
+                    'titles'         => $p['titles'],
+                    'type_identity'         => $p['type_identity'],
+                    'booking_code' => strtoupper(Str::random(6)),
+                ]);
+
+            }
         }
 
         $paymentUrl = Param::where('key', 'PAYMENT_URL')->value('value');
@@ -260,7 +421,7 @@ class HomeController extends Controller
         return to_route('request_order_detail', $payment_code);
     }
 
-    public function kursi_available($no,$id_schedule,$index){
+    public function kursi_available($no,$id_schedule,$index,$from,$to){
         $available = true;        
         $allDestination=DB::table("tb_route_detail")
             ->select("tb_destination.*")
@@ -275,10 +436,10 @@ class HomeController extends Controller
         $arrKursi = array();
         foreach($allDestination as $itemDest){
 
-            if($itemDest->id == session("from")){
+            if($itemDest->id == $from){
                 $cek = true;
             }
-            if($itemDest->id == session("to")){
+            if($itemDest->id == $to){
                 $cek = false;
             }
             if($cek){
