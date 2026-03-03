@@ -247,8 +247,8 @@ class HomeController extends Controller
         $data["payment_code"]=$payment_code;
         $dataTiket["id_destination_from"] = session("from");
         $dataTiket["id_destination_to"] = session("to");
-        if($id_b > 0){
-            $data["total_payment"] = DB::table("tb_schedule")->where("id",$id_b)->value("price")*session("person")*2;
+        if($id_p > 0){
+            $data["total_payment"] = (DB::table("tb_schedule")->where("id",$id_b)->value("price")*session("person")) +(DB::table("tb_schedule")->where("id",$id_p)->value("price")*session("person")) ;
         }else{
             $data["total_payment"] = DB::table("tb_schedule")->where("id",$id_b)->value("price")*session("person");    
         }
@@ -417,7 +417,8 @@ class HomeController extends Controller
             'order_id'     => $payment_code,
             'gross_amount' => $tiket->total_payment,
         ]);
-
+        $pUpdate["request_date"] = now();
+        DB::table("tb_payment")->where("payment_code",$payment_code)->update($pUpdate);
         return to_route('request_order_detail', $payment_code);
     }
 
