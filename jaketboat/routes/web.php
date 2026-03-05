@@ -1,12 +1,34 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Laravel\Socialite\Facades\Socialite;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\HomeController;
 use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
+Route::get('/auth/{provider}', function ($provider) {
+    return Socialite::driver($provider)->redirect();
+});
+
+Route::get('/auth/{provider}/callback', function ($provider) {
+    try {
+        $socialUser = Socialite::driver($provider)->user();
+    } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
+        $socialUser = Socialite::driver($provider)->stateless()->user();
+    }
+
+    $user = User::firstOrCreate(
+        ['email' => $socialUser->getEmail()],
+        ['name' => $socialUser->getName(), 'password' => bcrypt(str()->random(16))]
+    );
+
+    Auth::login($user);
+
+    return redirect('/dashboard');
+});
 
 Route::get('/',[HomeController::class, 'dashboard'] )->middleware(['auth', 'verified'])->name('home');
 Route::get('tiket',[HomeController::class, 'dashboard'] )->middleware(['auth', 'verified'])->name('dashboard');

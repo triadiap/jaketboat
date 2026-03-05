@@ -10,6 +10,8 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { FaGoogle } from "react-icons/fa";
+
 
 type Props = {
     status?: string;
@@ -106,6 +108,12 @@ export default function Login({
                                 </TextLink>
                             </div>
                         )}
+
+                        <div className='flex  text-center'>
+                            <a href="auth/google" className='seft-center w-full'>
+                                <Button className='w-full' variant={'outline'}><FaGoogle/> Masuk dengan Google</Button>
+                            </a>
+                        </div>
                     </>
                 )}
             </Form>
