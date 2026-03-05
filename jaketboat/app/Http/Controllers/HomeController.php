@@ -229,15 +229,17 @@ class HomeController extends Controller
     public function order(Request $request):Response
     {
         $id_customer = auth()->id();
+        
+        $idDestination = DB::table("tb_destination")->limit(1)->value("id");
         $ticket = DB::table("tb_ticket")
-            ->select("tb_ticket.*","tb_ship.name","tb_schedule.tanggal","tb_schedule.jam_berangkat")
+            ->select("tb_ticket.*","tb_payment.status_payment","tb_ship.name","tb_schedule.tanggal","tb_schedule.jam_berangkat","tb_ticket.id_destination_from")
             ->join("tb_schedule","tb_schedule.id","tb_ticket.id_schedule")
             ->join("tb_ship","tb_schedule.id_ship","tb_ship.id")
             ->join("tb_payment","tb_payment.id","tb_ticket.id_payment")
             ->where("tb_payment.id_customer",$id_customer)
             ->orderBy("tb_ticket.id","desc")
             ->get();        
-        return Inertia::render('ticket',["ListTicket"=>$ticket]);       
+        return Inertia::render('ticket',["id_destination"=>$idDestination,"ListTicket"=>$ticket]);       
     }
     public function pesan($id_b,$id_p,Request $request){
         $dataTiket["id_schedule"] = $id_b;
@@ -394,6 +396,7 @@ class HomeController extends Controller
                 'code'         => $p['no_kursi'],
                 'titles'         => $p['titles'],
                 'type_identity'         => $p['type_identity'],
+                'age'         => $p['usia'],
                 'booking_code' => strtoupper(Str::random(6)),
             ]);
             if($tiket_p){
@@ -404,6 +407,7 @@ class HomeController extends Controller
                     'code'         => $p['no_kursi_p'],
                     'titles'         => $p['titles'],
                     'type_identity'         => $p['type_identity'],
+                    'age'         => $p['usia'],
                     'booking_code' => strtoupper(Str::random(6)),
                 ]);
 

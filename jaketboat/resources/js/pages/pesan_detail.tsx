@@ -58,6 +58,7 @@ interface PassengerData {
     foto_ktp: File | null;
     no_kursi: string;
     no_kursi_p: string;
+    usia: string;
 }
 
 interface PassengerErrors {
@@ -68,6 +69,7 @@ interface PassengerErrors {
     no_kursi_p?: string;
     titles?: string;
     type_identity?: string;
+    usia?: string;
 }
 
 interface SeachProps {
@@ -78,17 +80,16 @@ interface SeachProps {
 
 export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps) {
     const [passengers, setPassengers] = useState<PassengerData[]>(
-        list_kursi.map((item) => ({titles:'',type_identity:'', nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi,no_kursi_p : item.no_kursi_p }))
+        list_kursi.map((item) => ({titles:'',type_identity:'', nik: '', nama: '', foto_ktp: null, no_kursi: item.no_kursi,no_kursi_p : item.no_kursi_p, usia:'' }))
     );
     const [errors, setErrors] = useState<PassengerErrors[]>(
         list_kursi.map(() => ({}))
     );
     const [dialogOpen, setDialogOpen] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
-
     useEffect(() => {
         if (paymentData) {
-            setDialogOpen(true);
+            //setDialogOpen(true);
         }
     }, [paymentData]);
 
@@ -153,10 +154,13 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
             }
             formData.append(`passengers[${i}][no_kursi]`, p.no_kursi);
             formData.append(`passengers[${i}][no_kursi_p]`, p.no_kursi_p);
+            formData.append(`passengers[${i}][usia]`, p.usia);
         });
 
         router.post(`/pesan_tiket_detail/${tiket.payment_code}`, formData);
     }
+    const formatCurrency = (value: number) =>
+        new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
     const iframeUrl = paymentData
         ? `${paymentData.payment_url}?order_id=${encodeURIComponent(paymentData.order_id)}&gross_amount=${encodeURIComponent(paymentData.gross_amount)}`
@@ -166,11 +170,11 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Detail Penumpang" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <Heading title="Detail Penumpang"
+                
+                {!paymentData && <><Heading title="Detail Penumpang"
                     description='Silahkan isikan data sesuai KTP penumpang'
                     variant='small'
-                />
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3 ">
+                /><div className="grid auto-rows-min gap-4 md:grid-cols-3 ">
                     {list_kursi.map((item, index) => (
                         <div key={item.id} className="relative overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <Card className="rounded-xl">
@@ -286,6 +290,25 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-1">
+                                        <Label htmlFor={`usia-${index}`}>Usia</Label>
+                                        <div className='flex-1'>
+                                            <Select name="usia" onValueChange={(val)=>updatePassenger(index, 'usia', val)} defaultValue={passengers[index].usia}>
+                                                <SelectTrigger id={`usia-${index}`} className="w-full">
+                                                    <SelectValue placeholder=""  />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        <SelectItem  value="anak">Anak-Anak</SelectItem>
+                                                        <SelectItem  value="dewasa">Dewasa</SelectItem>
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <InputError message={errors[index]?.usia} />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
                                         <Label htmlFor={`foto-${index}`}>Foto Identitas</Label>
                                         <Input
                                             id={`foto-${index}`}
@@ -311,6 +334,51 @@ export default function Dashboard({ tiket, list_kursi, paymentData }: SeachProps
                         PESAN SEKARANG
                     </Button>
                 </div>
+                </>
+                }
+
+                { paymentData && 
+                <Card className="rounded-xl">
+                    <CardHeader className="pb-2 pl-4 pt-4">
+                        <CardTitle className="text-base">Info Pembayaran</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-3 pl-4 pr-4 pb-4">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th className='py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700'>No</th>
+                                    <th className='py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700'>Keterangan</th>
+                                    <th className='py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700'>Jumlah</th>
+                                    <th className='py-2 px-4 bg-gray-200 text-left text-sm font-semibold text-gray-700'>Harga</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className='py-2 px-4 border-b border-gray-200 text-center'>1</td>
+                                    <td className='py-2 px-4 border-b border-gray-200'>Tiket</td>
+                                    <td className='py-2 px-4 border-b border-gray-200 text-center'>1</td>
+                                    <td className='py-2 px-4 border-b border-gray-200 text-right'>{formatCurrency(paymentData.gross_amount)}</td>
+                                </tr>
+                                <tr>
+                                    <td className='py-2 px-4 border-b border-gray-200 text-center'>2</td>
+                                    <td className='py-2 px-4 border-b border-gray-200'>Layanan</td>
+                                    <td className='py-2 px-4 border-b border-gray-200 text-center'>1</td>
+                                    <td className='py-2 px-4 border-b border-gray-200 text-right'>{formatCurrency(5000)}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan={3} className='py-2 px-4 border-b border-gray-200 font-bold'><b>Total</b></td>
+                                    <td className='py-2 px-4 border-b border-gray-200 font-bold text-right'><b>{formatCurrency(paymentData.gross_amount + 5000)}</b></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <Button onClick={()=>
+                            setDialogOpen(true)
+                        }>Bayar Sekarang</Button>
+                    </CardContent>
+                </Card>
+                }
             </div>
 
             <Dialog open={dialogOpen} onOpenChange={() => {}}>

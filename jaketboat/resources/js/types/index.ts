@@ -14,6 +14,7 @@ export type MasterTiket = {
     id: number;
     id_schedule: number;
     id_customer: number;
+    id_destination_from: number;
     total_passenger:number;
     to:string;
     from:string;
@@ -23,4 +24,5 @@ export type MasterTiket = {
     name:string;
     tanggal:string;
     jam_berangkat:string;
+    status_payment:string;
 }

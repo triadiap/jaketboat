@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import type {MasterDestination,MasterTiket, BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
 import Heading from '@/components/heading';
-import { CalendarDays, Clock, Ship, MapPin, CheckCircle2, XCircle, QrCode, ScanLine, User2 } from 'lucide-react';
+import { CalendarDays, Clock, Ship, MapPin, CheckCircle2, XCircle, QrCode, ScanLine, User2, CircleCheckBigIcon, ArrowBigRight, ArrowBigLeft } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,9 +38,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Props{
     ListTicket:MasterTiket[];
+    id_destination:number;
 }
 
-export default function Ticket({ListTicket}:Props) {
+export default function Ticket({ListTicket,id_destination}:Props) {
     const formatDate = (value: string) =>
         new Date(value).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -61,9 +62,13 @@ export default function Ticket({ListTicket}:Props) {
                     <div className="relative overflow-hidden">
                         <Card>
                             <CardContent className="pl-4 pr-4">
+                                <div className='flex justify-end mb-4'>
+                                    {item.id_destination_from == id_destination && <ArrowBigRight className='self-right'></ArrowBigRight>}
+                                    {item.id_destination_from != id_destination && <ArrowBigLeft className='self-right'></ArrowBigLeft>}
+                                </div>
                                 <div className='flex'>
                                     <div className='flex-1'>
-                                                                        <div className="flex items-center gap-2 ">
+                                    <div className="flex items-center gap-2 ">
                                     <Ship className="h-4 w-4 shrink-0" />
                                     <span>{item.name.toUpperCase()}</span>
                                 </div>
@@ -81,7 +86,7 @@ export default function Ticket({ListTicket}:Props) {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 shrink-0" />
-                                    <span>{(item.status=="paid")?"TIket sudah tersedia":"Menunggu tiket tergenerate"}</span>
+                                    <span>{(item.status_payment=="paid")?"TIket sudah tersedia":"Menunggu tiket tergenerate"}</span>
                                 </div>
 
                                     </div>
@@ -89,7 +94,7 @@ export default function Ticket({ListTicket}:Props) {
  
                                 </div>
                                 <a href={view_ticket.url(item.id)}>
-                                {(item.status=="paid") && <Button variant="outline" className="w-full mt-5">
+                                {(item.status_payment=="paid") && <Button variant="outline" className="w-full mt-5">
                                     Lihat Detail
                                 </Button>}
                                 </a>

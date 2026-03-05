@@ -73,7 +73,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
     return (
         <>
-            <div className="border-b bg-white border-sidebar-border/80">
+            <div className="border-b bg-background border-sidebar-border/80">
                 <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                     {/* Mobile Menu */}
                     <div className="lg:hidden">

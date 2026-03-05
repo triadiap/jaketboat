@@ -17,7 +17,8 @@ class Passenger extends Model
         'is_check_in',
         'checked_at',
         'type_identity',
-        'titles'
+        'titles',
+        'age'
     ];
 
     public function ticket()

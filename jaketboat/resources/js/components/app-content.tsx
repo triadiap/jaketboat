@@ -12,7 +12,7 @@ export function AppContent({ variant = 'header', children, ...props }: Props) {
 
     return (
         <main
-            className="bg-white mx-auto flex h-full w-full max-w-7xl min-h-[1080px] flex-1 flex-col"
+            className="bg-background mx-auto flex h-full w-full max-w-7xl min-h-[1080px] flex-1 flex-col"
             {...props}
         >
             {children}

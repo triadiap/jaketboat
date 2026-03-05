@@ -69,6 +69,11 @@ export default function Dashboard({destination,formData,result,result2,defRoundT
     const [scheduleB, setScheduleB] = useState(0); 
     const [scheduleP, setScheduleP] = useState(0); 
     const [roundTrip, setRoundTrip] = useState(defRoundTrip); 
+
+    
+    const [fromValue, setFromValue] = useState(formData.from);
+    const [toValue, setToValue] = useState(formData.to);
+    
     if(result2.length==0 && scheduleP==0){
         setScheduleP(-1);
     }
@@ -77,6 +82,12 @@ export default function Dashboard({destination,formData,result,result2,defRoundT
     function handleSubmit() {
         router.get(`/pesan_tiket/${scheduleB}/${scheduleP}`, formData);
     }
+    const handleSwap = () => {
+        setFromValue((prevFrom) => {
+        setToValue(prevFrom); // set 'to' to old 'from'
+            return toValue;       // set 'from' to old 'to'
+        });
+    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pesan Tiket" />
@@ -84,7 +95,7 @@ export default function Dashboard({destination,formData,result,result2,defRoundT
                 <div className="flex bg-linear-to-r from-cyan-500 to-blue-500 bg-[url(/images/JAKETBOAT.png)] bg-fit overflow-hidden border border-sidebar-border/70 dark:border-sidebar-border">
                     <div className="none md:flex-1"></div>
                     <div className="none md:flex-1"></div>
-                    <div className = "bg-white flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4 m-4 md:mr-10" >
+                    <div className = "bg-background flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4 m-4 md:mr-10" >
                         <p className='font-bold mb-10'                            
                         >Pilih Rute</p>
                         <Form 
@@ -97,7 +108,7 @@ export default function Dashboard({destination,formData,result,result2,defRoundT
                                 <>
                                 <div className="grid gap-2">
                                     <Label htmlFor="pemberangkatan">From</Label>
-                                    <Select name="from" defaultValue={formData.from}>
+                                    <Select name="from" value={fromValue}  onValueChange={(e) => setFromValue(e)}>
                                         <SelectTrigger className="mt-1 w-full">
                                             <SelectValue placeholder="From"  />
                                         </SelectTrigger>
@@ -114,9 +125,14 @@ export default function Dashboard({destination,formData,result,result2,defRoundT
                                         message=""
                                     />
                                 </div>
+                                <div className='flex-1'>
+                                    <Button onClick={handleSwap} variant={'outline'}>
+                                        <RefreshCcw></RefreshCcw>
+                                    </Button>
+                                </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="pemberangkatan">To</Label>
-                                    <Select name="to" defaultValue={formData.to}>
+                                    <Select name="to" value={toValue} onValueChange={(e) => setToValue(e)}>
                                         <SelectTrigger className="mt-1 w-full">
                                             <SelectValue placeholder="To" />
                                         </SelectTrigger>
@@ -169,7 +185,7 @@ export default function Dashboard({destination,formData,result,result2,defRoundT
                                             {!roundTrip && <ToggleLeft  className="w-18 h-18" />}
                                             {roundTrip && <ToggleRight className=" w-18 h-18" />}
                                         </Toggle>
-                                        Round Trip
+                                        <Label htmlFor="round_trip">Round Trip</Label>
 
                                     </div>
                                         { roundTrip && <><Input
